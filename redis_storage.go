@@ -43,7 +43,7 @@ func NewRedisStorage(redisHost string, redisConnPoolSize int, redisPrefix string
 }
 
 // Get an item from Redis
-func (rs *RedisStorage) Get(key string) (interface{}, error) {
+func (rs *RedisStorage) Get(key string) ([]uint8, error) {
 	conn := rs.connection()
 	defer conn.Close()
 	data, err := redis.Bytes(conn.Do("GET", rs.prefix+key))
@@ -57,12 +57,11 @@ func (rs *RedisStorage) Get(key string) (interface{}, error) {
 
 // Get string value from cached item
 func (rs *RedisStorage) GetString(key string) (string, error) {
-	val, err := rs.Get(key)
+	buffer, err := rs.Get(key)
 	if err != nil {
 		return "", err
 	}
 	result := new(string)
-	buffer := val.([]uint8)
 	dec := gob.NewDecoder(bytes.NewBuffer(buffer))
 	if err := dec.Decode(result); err != nil {
 		return "", err
@@ -73,12 +72,11 @@ func (rs *RedisStorage) GetString(key string) (string, error) {
 
 // Get int32 value from cached item
 func (rs *RedisStorage) GetInt32(key string) (int32, error) {
-	val, err := rs.Get(key)
+	buffer, err := rs.Get(key)
 	if err != nil {
 		return 0, err
 	}
 	result := new(int32)
-	buffer := val.([]uint8)
 	dec := gob.NewDecoder(bytes.NewBuffer(buffer))
 	if err := dec.Decode(result); err != nil {
 		return 0, err
@@ -89,12 +87,11 @@ func (rs *RedisStorage) GetInt32(key string) (int32, error) {
 
 // Get int64 value from cached item
 func (rs *RedisStorage) GetInt64(key string) (int64, error) {
-	val, err := rs.Get(key)
+	buffer, err := rs.Get(key)
 	if err != nil {
 		return 0, err
 	}
 	result := new(int64)
-	buffer := val.([]uint8)
 	dec := gob.NewDecoder(bytes.NewBuffer(buffer))
 	if err := dec.Decode(result); err != nil {
 		return 0, err
@@ -105,12 +102,11 @@ func (rs *RedisStorage) GetInt64(key string) (int64, error) {
 
 // Get int value from cached item
 func (rs *RedisStorage) GetInt(key string) (int, error) {
-	val, err := rs.Get(key)
+	buffer, err := rs.Get(key)
 	if err != nil {
 		return 0, err
 	}
 	result := new(int)
-	buffer := val.([]uint8)
 	dec := gob.NewDecoder(bytes.NewBuffer(buffer))
 	if err := dec.Decode(result); err != nil {
 		return 0, err
@@ -121,12 +117,11 @@ func (rs *RedisStorage) GetInt(key string) (int, error) {
 
 // Get float64 value from cached item
 func (rs *RedisStorage) GetFloat64(key string) (float64, error) {
-	val, err := rs.Get(key)
+	buffer, err := rs.Get(key)
 	if err != nil {
 		return 0, err
 	}
 	result := new(float64)
-	buffer := val.([]uint8)
 	dec := gob.NewDecoder(bytes.NewBuffer(buffer))
 	if err := dec.Decode(result); err != nil {
 		return 0, err
