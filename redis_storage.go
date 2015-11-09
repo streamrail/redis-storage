@@ -27,6 +27,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"github.com/garyburd/redigo/redis"
+	"sync"
 	"time"
 )
 
@@ -34,12 +35,38 @@ import (
 type RedisStorage struct {
 	pool   *redis.Pool
 	prefix string
+
+	// pubsub client
+	conn redis.Conn
+	redis.PubSubConn
+	sync.Mutex
+}
+
+type Message struct {
+	Type    string
+	Channel string
+	Data    string
 }
 
 // Get a new instance of RedisStorage
 func NewRedisStorage(redisHost string, redisConnPoolSize int, redisPrefix string) *RedisStorage {
 	pool := newRedisConnectionPool(redisHost, redisConnPoolSize)
-	return &RedisStorage{pool, redisPrefix}
+	client := &RedisStorage{
+		pool,
+		redisPrefix,
+		pool.Get(),
+		redis.PubSubConn{pool.Get()},
+		sync.Mutex{},
+	}
+	go func() {
+		for {
+			time.Sleep(200 * time.Millisecond)
+			client.Lock()
+			client.conn.Flush()
+			client.Unlock()
+		}
+	}()
+	return client
 }
 
 // Get an item from Redis
@@ -202,4 +229,22 @@ func newRedisConnectionPool(host string, poolSize int) *redis.Pool {
 
 func (r *RedisStorage) connection() redis.Conn {
 	return r.pool.Get()
+}
+
+func (r *RedisStorage) Pool() *redis.Pool {
+	return r.pool
+}
+
+func (client *RedisStorage) Receive() *Message {
+	switch message := client.PubSubConn.Receive().(type) {
+	case redis.Message:
+		return &Message{"message", message.Channel, string(message.Data)}
+	}
+	return nil
+}
+
+func (client *RedisStorage) Publish(channel, data string) {
+	client.Lock()
+	client.conn.Send("PUBLISH", channel, data)
+	client.Unlock()
 }
