@@ -235,12 +235,16 @@ func (r *RedisStorage) Pool() *redis.Pool {
 	return r.pool
 }
 
-func (client *RedisStorage) Receive() *Message {
-	switch message := client.PubSubConn.Receive().(type) {
+func (client *RedisStorage) Receive(psc redis.PubSubConn) *Message {
+	switch message := psc.Receive().(type) {
 	case redis.Message:
 		return &Message{"message", message.Channel, string(message.Data)}
 	}
 	return nil
+}
+
+func (client *RedisStorage) NewPubSubConn() redis.PubSubConn {
+	return redis.PubSubConn{client.Pool().Get()}
 }
 
 func (client *RedisStorage) Publish(channel, data string) {
