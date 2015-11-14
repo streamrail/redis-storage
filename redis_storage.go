@@ -75,7 +75,7 @@ func (rs *RedisStorage) Get(key string) ([]uint8, error) {
 	defer conn.Close()
 	data, err := redis.Bytes(conn.Do("GET", rs.prefix+key))
 	if err == redis.ErrNil {
-		return nil, nil
+		return nil, redis.ErrNil
 	} else if err != nil {
 		return nil, err
 	}
