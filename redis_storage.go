@@ -31,6 +31,9 @@ import (
 	"time"
 )
 
+var ErrNil = redis.ErrNil
+var ErrPoolExhausted = redis.ErrPoolExhausted
+
 // RedisStorage holds a redis pool and a prefix and is used to Set and Get items from Redis
 type RedisStorage struct {
 	pool   *redis.Pool
