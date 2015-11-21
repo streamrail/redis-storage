@@ -215,7 +215,7 @@ func (rs *RedisStorage) Delete(key string) error {
 		return err
 	}
 	if result != 1 {
-		return errors.New("redis: DEL call failed")
+		return errors.New("redis: DEL call failed for key (inc. prefix) " + rs.prefix + key)
 	}
 	return nil
 }
